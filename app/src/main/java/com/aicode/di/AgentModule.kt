@@ -40,6 +40,7 @@ import com.aicode.feature.agent.domain.tool.container.TerminalSessionTool
 import com.aicode.feature.agent.domain.tool.explorer.ListFilesTool
 import com.aicode.feature.agent.domain.tool.explorer.SearchCodeTool
 import com.aicode.feature.agent.domain.tool.shizuku.ShizukuTool
+import com.aicode.feature.agent.domain.tool.skill.KbMatchTool
 import com.aicode.feature.agent.domain.tool.skill.LoadSkillTool
 import com.aicode.feature.agent.domain.tool.question.AskUserQuestionTool
 import com.aicode.feature.agent.domain.tool.todo.TodoTool
@@ -366,6 +367,7 @@ object AgentModule {
         listFilesTool: ListFilesTool,
         searchCodeTool: SearchCodeTool,
         loadSkillTool: LoadSkillTool,
+        kbMatchTool: KbMatchTool,
         askUserQuestionTool: AskUserQuestionTool,
         manageMcpTool: ManageMcpTool,
         webSearchTool: WebSearchTool,
@@ -391,6 +393,7 @@ object AgentModule {
             register("list", listFilesTool)
             register("search", searchCodeTool)
             register("loadSkill", loadSkillTool)
+            register("kbMatch", kbMatchTool)
             register("askUserQuestion", askUserQuestionTool)
             register("manageMcp", manageMcpTool)
             register("websearch", webSearchTool)

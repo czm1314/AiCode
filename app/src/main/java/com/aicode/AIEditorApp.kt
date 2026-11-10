@@ -278,6 +278,11 @@ class AIEditorApp : Application(), Configuration.Provider {
         appScope.launch {
             ContainerInstaller.extractAgents(this@AIEditorApp)
         }
+        // 启动即释放「富江破甲包」：知识库技能 → ~/.aicode/skills/kb-*，提示词覆盖 → ~/.aicode/prompts.custom/。
+        // 版本相同则跳过；用户建 ~/.aicode/fujiang.off 可整包关掉。
+        appScope.launch {
+            ContainerInstaller.extractFujiangPack(this@AIEditorApp)
+        }
         // 启动即把旧 Room git 凭据一次性迁移到 git-credentials 文件（真源已迁到文件，删表由迁移器完成）。
         appScope.launch {
             legacyCredentialMigrator.migrateIfNeeded()

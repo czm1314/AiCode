@@ -111,6 +111,63 @@ class ContainerInstaller @Inject constructor(
         }
 
         /**
+         * 从 assets 释放「富江破甲包」：知识库技能 + 提示词覆盖。
+         *
+         * - 技能：`assets/fujiang/skills/kb-*/` → `~/.aicode/skills/kb-*/`，按包版本覆盖式释放；
+         * - 提示词：`assets/fujiang/prompts/*.md` → `~/.aicode/prompts.custom/`，**仅在不存在时写入**，
+         *   因为该目录是用户自己的覆盖层，写进去后由用户接管，升级不拉回。
+         * - 关掉：在 `~/.aicode/` 建空文件 `fujiang.off`，本方法直接跳过，已释放的内容保留。
+         *
+         * 版本相同就整体跳过，避免每次启动重写 176 个知识库条目。
+         */
+        fun extractFujiangPack(context: Context) {
+            val aicodeDir = File(context.filesDir, "aicode")
+            if (File(aicodeDir, "fujiang.off").isFile) return
+
+            val packVersion = runCatching {
+                context.assets.open("fujiang/version.txt").bufferedReader().use { it.readText() }.trim()
+            }.getOrDefault("")
+            val marker = File(aicodeDir, "fujiang.pack-version")
+            val installed = runCatching { marker.readText().trim() }.getOrDefault("")
+            if (packVersion.isNotEmpty() && packVersion == installed) return
+
+            runCatching {
+                val skillsDir = File(aicodeDir, "skills")
+                val promptsDir = File(aicodeDir, "prompts.custom")
+                skillsDir.mkdirs()
+                promptsDir.mkdirs()
+
+                // 知识库技能：包内即真源，按版本整目录覆盖
+                val categories = context.assets.list("fujiang/skills") ?: emptyArray()
+                for (category in categories) {
+                    val target = File(skillsDir, category)
+                    target.mkdirs()
+                    extractAssetsRecursive(context, "fujiang/skills/$category", target)
+                }
+
+                // 提示词覆盖：只补缺，不覆盖用户已经改过的片段
+                val promptFiles = context.assets.list("fujiang/prompts") ?: emptyArray()
+                var written = 0
+                for (name in promptFiles) {
+                    val target = File(promptsDir, name)
+                    if (target.exists()) continue
+                    context.assets.open("fujiang/prompts/$name").use { input ->
+                        target.outputStream().use { output -> input.copyTo(output) }
+                    }
+                    written++
+                }
+
+                marker.writeText(packVersion)
+                FileLogger.i(
+                    TAG,
+                    "富江破甲包已释放: $packVersion，技能 ${categories.size} 个分类，提示词新增 $written 个"
+                )
+            }.onFailure {
+                FileLogger.w(TAG, "释放富江破甲包失败: ${it.message}", it)
+            }
+        }
+
+        /**
          * 从 assets 提取内置脚本（如面板 demo_balance.py）到 ~/.aicode/scripts/。
          * 若文件已存在则不覆盖，以保留用户的修改。
          */
