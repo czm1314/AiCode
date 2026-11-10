@@ -76,3 +76,13 @@ jobs:
       # 跑全 flavor 6 变体是重复编译，无额外覆盖。
       - name: Run unit tests
         run: ./gradlew :app:testUniversalDebugUnitTest
+
+      # 把 universal debug APK 作为 artifact 上传：debug 变体用 debug keystore 自动签名，
+      # 无需 Release 的 4 个 keystore Secret 就能直接装真机验证（定制的富江破甲包走这条）。
+      - name: Upload universal debug APK
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: aicode-universal-debug
+          path: app/build/outputs/apk/universal/debug/*.apk
+          if-no-files-found: warn
