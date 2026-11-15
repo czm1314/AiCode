@@ -42,6 +42,10 @@ import com.aicode.feature.agent.domain.tool.explorer.SearchCodeTool
 import com.aicode.feature.agent.domain.tool.shizuku.ShizukuTool
 import com.aicode.feature.agent.domain.tool.skill.KbMatchTool
 import com.aicode.feature.agent.domain.tool.skill.LoadSkillTool
+import com.aicode.feature.agent.domain.tool.fujiang.CampaignUpsertTool
+import com.aicode.feature.agent.domain.tool.fujiang.FindingUpsertTool
+import com.aicode.feature.agent.domain.tool.fujiang.PipelineNextTool
+import com.aicode.feature.agent.domain.tool.fujiang.SkillSearchTool
 import com.aicode.feature.agent.domain.tool.question.AskUserQuestionTool
 import com.aicode.feature.agent.domain.tool.todo.TodoTool
 import com.aicode.feature.agent.domain.tool.subagent.TaskTool
@@ -368,6 +372,10 @@ object AgentModule {
         searchCodeTool: SearchCodeTool,
         loadSkillTool: LoadSkillTool,
         kbMatchTool: KbMatchTool,
+        skillSearchTool: SkillSearchTool,
+        findingUpsertTool: FindingUpsertTool,
+        campaignUpsertTool: CampaignUpsertTool,
+        pipelineNextTool: PipelineNextTool,
         askUserQuestionTool: AskUserQuestionTool,
         manageMcpTool: ManageMcpTool,
         webSearchTool: WebSearchTool,
@@ -394,6 +402,10 @@ object AgentModule {
             register("search", searchCodeTool)
             register("loadSkill", loadSkillTool)
             register("kbMatch", kbMatchTool)
+            register("skillSearch", skillSearchTool)
+            register("findingUpsert", findingUpsertTool)
+            register("campaignUpsert", campaignUpsertTool)
+            register("pipelineNext", pipelineNextTool)
             register("askUserQuestion", askUserQuestionTool)
             register("manageMcp", manageMcpTool)
             register("websearch", webSearchTool)

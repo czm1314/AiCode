@@ -151,7 +151,8 @@ export default defineConfig({
             { text: '子代理', link: '/guide/subagent' },
             { text: 'Shizuku 工具', link: '/guide/shizuku' },
             { text: '自定义提示词', link: '/guide/custom-prompts' },
-            { text: '记忆与项目规则', link: '/guide/memory' }
+            { text: '记忆与项目规则', link: '/guide/memory' },
+            { text: '富江破甲（知识库 / 报告 / 作业链）', link: '/guide/fujiang' }
           ]
         },
         {

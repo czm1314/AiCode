@@ -32,3 +32,10 @@
 - 配置分全局（`~/.aicode/mcp.json`）与项目级（`<projectRoot>/.aicode/mcp.json`），项目级优先。
 - 用 `manageMcp` 安装、移除或列出（`scope` 指定 global 或 project）；不要手动编辑 mcp.json。
 - 支持远程 HTTP（`url`，可选 `headers` 鉴权）与本地 stdio（`command`，可选 `args`）。新增或移除后下一次会话生效。
+
+## 富江破甲（本地安全语料）
+- 知识库：`~/.aicode/skills/kb-*` 下 9 类条目。拿到端口、banner、响应头、产品或版本先调 `kbMatch` 匹配候选，再用 `loadSkill` 读对应分类，按条目里的 PoC 与判据执行；不要凭记忆编造利用步骤。
+- 技能检索：`skillSearch` 按关键词找技能，`read=true` 带回第一名正文；不确定该读哪个技能时先用它。
+- 漏洞报告：`findingUpsert` 写 `~/.aicode/fujiang/vuln-report/findings.json`；新增必须同时给 `target` 与 `evidence`，有 `id` 则为更新。
+- 作业链：`campaignUpsert` 建任务（`scope` 必填）、记资产（host 必须在范围内）、记步骤与 PoC 尝试、推进阶段；`pipelineNext` 读下一步与候选条目。
+- 数据全部在本地，不联网；条目是公开资料整理（`verified: false`），出报告前按目标版本自验。用户在「设置 → 富江破甲」里能看到并删除这些记录。

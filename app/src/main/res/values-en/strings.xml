@@ -2006,4 +2006,42 @@
     <string name="browser_ua_custom_dialog_title">Custom User-Agent</string>
     <string name="browser_ua_custom_input_hint">Enter full User-Agent string</string>
     <string name="browser_ua_applied_toast">User-Agent updated, page reloaded</string>
+
+    <!-- Fujiang -->
+    <string name="settings_fujiang">Fujiang</string>
+    <string name="fujiang_tab_findings">Vulnerabilities</string>
+    <string name="fujiang_tab_knowledge">Knowledge base</string>
+    <string name="fujiang_tab_campaigns">Campaigns</string>
+    <string name="fujiang_empty_findings_title">No findings yet</string>
+    <string name="fujiang_empty_findings_hint">Entries written by the AI via findingUpsert show up here; new ones require target and evidence.</string>
+    <string name="fujiang_empty_knowledge_title">Knowledge base is empty</string>
+    <string name="fujiang_empty_knowledge_hint">The kb-* skills are extracted to ~/.aicode/skills on first launch; all entries are listed here afterwards.</string>
+    <string name="fujiang_empty_campaigns_title">No campaigns yet</string>
+    <string name="fujiang_empty_campaigns_hint">The AI creates campaigns and records assets and stages via campaignUpsert; the ledger lives in ~/.aicode/fujiang/vuln-report/campaigns.json.</string>
+    <string name="fujiang_delete_finding_title">Delete this finding?</string>
+    <string name="fujiang_delete_finding_message">It cannot be restored from the UI.</string>
+    <string name="fujiang_delete_campaign_title">Delete this campaign?</string>
+    <string name="fujiang_delete_campaign_message">The campaign, its assets and steps are removed together.</string>
+    <string name="fujiang_label_target">Target</string>
+    <string name="fujiang_label_url">Location</string>
+    <string name="fujiang_label_severity">Severity</string>
+    <string name="fujiang_label_category">Category</string>
+    <string name="fujiang_label_cve">CVE</string>
+    <string name="fujiang_label_cvss">CVSS</string>
+    <string name="fujiang_label_evidence">Evidence</string>
+    <string name="fujiang_label_description">Description</string>
+    <string name="fujiang_label_remediation">Remediation</string>
+    <string name="fujiang_label_references">References</string>
+    <string name="fujiang_label_status">Status</string>
+    <string name="fujiang_verified">Verified</string>
+    <string name="fujiang_unverified">Unverified</string>
+    <string name="fujiang_label_scope">Scope</string>
+    <string name="fujiang_label_objective">Objective</string>
+    <string name="fujiang_label_assets">Assets</string>
+    <string name="fujiang_label_steps">Steps</string>
+    <string name="fujiang_label_attempts">PoC attempts</string>
+    <string name="fujiang_stage_progress">%1$s · round %2$d/%3$d</string>
+    <string name="fujiang_asset_count">%1$d assets</string>
+    <string name="fujiang_entry_count">%1$d entries</string>
+    <string name="fujiang_loading_entry">Loading entry…</string>
 </resources>

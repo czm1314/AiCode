@@ -2005,4 +2005,42 @@
     <string name="browser_ua_custom_dialog_title">自定义 User-Agent</string>
     <string name="browser_ua_custom_input_hint">输入完整的 User-Agent 字符串</string>
     <string name="browser_ua_applied_toast">已切换浏览器标识并刷新页面</string>
+
+    <!-- 富江破甲 -->
+    <string name="settings_fujiang">富江破甲</string>
+    <string name="fujiang_tab_findings">漏洞报告</string>
+    <string name="fujiang_tab_knowledge">知识库</string>
+    <string name="fujiang_tab_campaigns">渗透作业链</string>
+    <string name="fujiang_empty_findings_title">还没有漏洞记录</string>
+    <string name="fujiang_empty_findings_hint">AI 用 findingUpsert 写入的条会出现在这里；新增必须带 target 与 evidence。</string>
+    <string name="fujiang_empty_knowledge_title">知识库为空</string>
+    <string name="fujiang_empty_knowledge_hint">首次启动会自动释放 kb-* 技能到 ~/.aicode/skills，释放后这里会列出全部条目。</string>
+    <string name="fujiang_empty_campaigns_title">还没有作业任务</string>
+    <string name="fujiang_empty_campaigns_hint">AI 用 campaignUpsert 建任务、记资产与阶段，台账写在 ~/.aicode/fujiang/vuln-report/campaigns.json。</string>
+    <string name="fujiang_delete_finding_title">删除这条漏洞记录？</string>
+    <string name="fujiang_delete_finding_message">删除后无法从界面恢复。</string>
+    <string name="fujiang_delete_campaign_title">删除这个作业任务？</string>
+    <string name="fujiang_delete_campaign_message">任务、资产与步骤记录会一起删掉。</string>
+    <string name="fujiang_label_target">目标</string>
+    <string name="fujiang_label_url">位置</string>
+    <string name="fujiang_label_severity">等级</string>
+    <string name="fujiang_label_category">类别</string>
+    <string name="fujiang_label_cve">CVE</string>
+    <string name="fujiang_label_cvss">CVSS</string>
+    <string name="fujiang_label_evidence">证据</string>
+    <string name="fujiang_label_description">说明</string>
+    <string name="fujiang_label_remediation">修复建议</string>
+    <string name="fujiang_label_references">参考</string>
+    <string name="fujiang_label_status">状态</string>
+    <string name="fujiang_verified">已验证</string>
+    <string name="fujiang_unverified">未验证</string>
+    <string name="fujiang_label_scope">授权范围</string>
+    <string name="fujiang_label_objective">目标</string>
+    <string name="fujiang_label_assets">资产</string>
+    <string name="fujiang_label_steps">步骤</string>
+    <string name="fujiang_label_attempts">PoC 尝试</string>
+    <string name="fujiang_stage_progress">%1$s · 第 %2$d/%3$d 轮</string>
+    <string name="fujiang_asset_count">%1$d 个资产</string>
+    <string name="fujiang_entry_count">%1$d 条</string>
+    <string name="fujiang_loading_entry">正在读取条目…</string>
 </resources>

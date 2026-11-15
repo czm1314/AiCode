@@ -43,6 +43,7 @@
 | Shizuku 工具 | AI 的 `Shizuku` 工具：用 Shizuku 执行系统命令（1.12.0 起）→ [文档](/guide/shizuku) |
 | 自定义提示词 | 覆盖与定制 AI 系统的提示词片段 → [文档](/guide/custom-prompts) |
 | 记忆与项目规则 | 跨会话长期记忆，以及 AGENTS.md / CLAUDE.md 项目规则 → [文档](/guide/memory) |
+| 富江破甲 | 本地 CVE/PoC 知识库、漏洞报告与渗透作业链；AI 可用 `kbMatch` / `skillSearch` / `findingUpsert` / `campaignUpsert` / `pipelineNext` → [文档](/guide/fujiang) |
 
 ### 运行环境
 

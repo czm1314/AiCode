@@ -152,6 +152,7 @@ internal enum class SettingsSection(@param:StringRes val titleRes: Int) {
     DefaultModels(R.string.settings_default_models),
     Mcp(R.string.settings_mcp),
     Skills(R.string.settings_skills),
+    Fujiang(R.string.settings_fujiang),
     Prompts(R.string.prompts_title),
     PromptDetail(R.string.prompts_title),
     PromptEditor(R.string.prompts_title),
@@ -916,6 +917,12 @@ fun SettingsScreen(
             when (current) {
                 // 大屏菜单已常驻左栏，右栏在没选中分区时给个占位提示
                 SettingsSection.Menu -> if (expanded) SettingsDetailPlaceholder() else menuBody()
+                SettingsSection.Fujiang -> {
+                    val fujiangViewModel: com.aicode.feature.settings.presentation.FujiangViewModel =
+                        androidx.hilt.navigation.compose.hiltViewModel()
+                    LaunchedEffect(Unit) { fujiangViewModel.refresh() }
+                    FujiangSection(viewModel = fujiangViewModel)
+                }
                 SettingsSection.General -> GeneralSettingsSection(
                     autoRemoveStaleModels = autoRemoveStaleModels,
                     onToggleAutoRemoveStaleModels = { viewModel.setAutoRemoveStaleModels(it) },
@@ -1755,6 +1762,12 @@ internal fun SettingsMenu(
                 icon = FeatherIcons.MessageSquare,
                 title = stringResource(SettingsSection.Prompts.titleRes),
                 onClick = { onOpen(SettingsSection.Prompts) }
+            )
+            SettingsDivider()
+            SettingsRow(
+                icon = FeatherIcons.Shield,
+                title = stringResource(SettingsSection.Fujiang.titleRes),
+                onClick = { onOpen(SettingsSection.Fujiang) }
             )
         }
 
