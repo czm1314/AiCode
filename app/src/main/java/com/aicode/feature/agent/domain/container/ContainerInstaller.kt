@@ -8,6 +8,14 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.put
+import kotlinx.serialization.json.putJsonObject
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
 import org.apache.commons.compress.compressors.xz.XZCompressorInputStream
@@ -17,6 +25,7 @@ import java.nio.file.Files
 import java.nio.file.LinkOption
 import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.attribute.PosixFilePermissions
+import java.security.MessageDigest
 import java.util.zip.GZIPInputStream
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -33,6 +42,9 @@ class ContainerInstaller @Inject constructor(
 ) {
     companion object {
         private const val TAG = "ContainerInstaller"
+        private const val PROMPT_STATE_PATH = "fujiang/managed-prompts.json"
+        private const val PROMPT_BASELINE_ASSET = "fujiang/prompts-baseline.txt"
+        private val PROMPT_JSON = Json { ignoreUnknownKeys = true; isLenient = true }
         @Volatile private var docsExtractedSession = false
 
         /**
@@ -113,9 +125,10 @@ class ContainerInstaller @Inject constructor(
         /**
          * 从 assets 释放「富江破甲包」：知识库技能 + 提示词覆盖。
          *
-         * - 技能：`assets/fujiang/skills/kb-*/` → `~/.aicode/skills/kb-*/`，按包版本覆盖式释放；
-         * - 提示词：`assets/fujiang/prompts/*.md` → `~/.aicode/prompts.custom/`，**仅在不存在时写入**，
-         *   因为该目录是用户自己的覆盖层，写进去后由用户接管，升级不拉回。
+         * - 技能：`assets/fujiang/skills/kb-*` → `~/.aicode/skills/kb-*`，按包版本覆盖式释放；
+         * - 提示词：`assets/fujiang/prompts/` 下的 `.md` 文件 → `~/.aicode/prompts.custom/`，按托管哈希升级：
+         *   文件不存在则写入；内容仍等于上一次包释放的版本（托管清单或 `prompts-baseline.txt` 记的哈希）
+         *   则覆盖为新版；用户改过的保留不动。该目录是用户的覆盖层，不能被升级硬拉回。
          * - 关掉：在 `~/.aicode/` 建空文件 `fujiang.off`，本方法直接跳过，已释放的内容保留。
          *
          * 版本相同就整体跳过，避免每次启动重写 176 个知识库条目。
@@ -145,27 +158,83 @@ class ContainerInstaller @Inject constructor(
                     extractAssetsRecursive(context, "fujiang/skills/$category", target)
                 }
 
-                // 提示词覆盖：只补缺，不覆盖用户已经改过的片段
+                // 提示词覆盖：用户没改过的跟着包升级，改过的保留
                 val promptFiles = context.assets.list("fujiang/prompts") ?: emptyArray()
-                var written = 0
+                val promptState = File(aicodeDir, PROMPT_STATE_PATH)
+                val managed = readManagedPromptHashes(promptState)
+                val baseline = readPromptBaseline(context)
+                var added = 0
+                var upgraded = 0
                 for (name in promptFiles) {
                     val target = File(promptsDir, name)
-                    if (target.exists()) continue
-                    context.assets.open("fujiang/prompts/$name").use { input ->
-                        target.outputStream().use { output -> input.copyTo(output) }
-                    }
-                    written++
+                    val bytes = context.assets.open("fujiang/prompts/$name").use { it.readBytes() }
+                    val assetHash = sha256(bytes)
+                    val currentHash = if (target.isFile) sha256(target.readBytes()) else null
+                    val owned = currentHash == null ||
+                        managed[name] == currentHash ||
+                        baseline[name] == currentHash
+                    if (!owned) continue
+                    managed[name] = assetHash
+                    if (currentHash == assetHash) continue
+                    target.outputStream().use { it.write(bytes) }
+                    if (currentHash == null) added++ else upgraded++
                 }
+                writeManagedPromptHashes(promptState, managed)
 
                 marker.writeText(packVersion)
                 FileLogger.i(
                     TAG,
-                    "富江破甲包已释放: $packVersion，技能 ${categories.size} 个分类，提示词新增 $written 个"
+                    "富江破甲包已释放: $packVersion，技能 ${categories.size} 个分类，" +
+                        "提示词新增 $added 个、升级 $upgraded 个"
                 )
             }.onFailure {
                 FileLogger.w(TAG, "释放富江破甲包失败: ${it.message}", it)
             }
         }
+
+        /**
+         * 托管提示词清单：`{"schema":1,"prompts":{"文件名":"sha256"}}`。
+         * 记录上一次由包写入的内容哈希，用来区分「能被升级覆盖」与「用户改过、不要动」。
+         */
+        private fun readManagedPromptHashes(file: File): LinkedHashMap<String, String> {
+            val map = LinkedHashMap<String, String>()
+            val text = runCatching { file.readText() }.getOrNull() ?: return map
+            val prompts = runCatching {
+                (PROMPT_JSON.parseToJsonElement(text).jsonObject["prompts"] as? JsonObject)
+            }.getOrNull() ?: return map
+            for ((name, value) in prompts) {
+                (value as? JsonPrimitive)?.contentOrNull?.let { map[name] = it }
+            }
+            return map
+        }
+
+        private fun writeManagedPromptHashes(file: File, hashes: Map<String, String>) {
+            runCatching {
+                file.parentFile?.mkdirs()
+                val root = buildJsonObject {
+                    put("schema", 1)
+                    putJsonObject("prompts") {
+                        hashes.forEach { (name, hash) -> put(name, hash) }
+                    }
+                }
+                file.writeText(PROMPT_JSON.encodeToString(JsonObject.serializer(), root) + "\n")
+            }.onFailure {
+                FileLogger.w(TAG, "写入托管提示词清单失败: ${it.message}", it)
+            }
+        }
+
+        /** 上一版包释放的提示词哈希，用于识别升级前用户尚未改动过的文件。 */
+        private fun readPromptBaseline(context: Context): Map<String, String> = runCatching {
+            context.assets.open(PROMPT_BASELINE_ASSET).bufferedReader().use { reader ->
+                reader.readLines().mapNotNull { line ->
+                    val parts = line.trim().split(' ')
+                    if (parts.size == 2 && parts[0].length == 64) parts[1] to parts[0] else null
+                }.toMap()
+            }
+        }.getOrDefault(emptyMap())
+
+        private fun sha256(bytes: ByteArray): String =
+            MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it) }
 
         /**
          * 从 assets 提取内置脚本（如面板 demo_balance.py）到 ~/.aicode/scripts/。

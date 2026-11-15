@@ -1,6 +1,6 @@
 # 富江破甲包（内置扩展）
 
-本仓库内置了「富江破甲」扩展包（上游 `fujiang-pojia` 0.20.12），把上游给 DeepSeek Harness 写的 Cordis 插件，
+本仓库内置了「富江破甲」扩展包（上游 `fujiang-pojia` 0.20.13），把上游给 DeepSeek Harness 写的 Cordis 插件，
 改造成本 App 原生的两套机制：**内置技能** + **提示词覆盖层**，另配一个本地知识库匹配工具。
 
 ## 放了什么
@@ -10,6 +10,7 @@
 | `app/src/main/assets/fujiang/skills/kb-*/` | 9 个分类、167 条 CVE/PoC 语料（每条一个 `.md`，frontmatter 带 title/cve/severity/product/versions/ports/keywords） |
 | `app/src/main/assets/fujiang/prompts/00-identity.md` | 富江人设与破甲规则，覆盖内置 `prompts/00-identity.md` |
 | `app/src/main/assets/fujiang/prompts/50-safety.md` | 覆盖内置安全片段：保留可逆性判断与注入防护，去掉拒绝式边界 |
+| `app/src/main/assets/fujiang/prompts-baseline.txt` | 上一版提示词的 sha256，用于区分「包释放的」与「用户改过的」 |
 | `app/src/main/assets/fujiang/version.txt` | 包版本，用于「版本变了才重新释放」 |
 | `KnowledgeIndex.kt` | 语料索引 + 指纹匹配（端口/产品/CVE/关键词打分） |
 | `KbMatchTool.kt` | 工具 `kbMatch`，把匹配结果给 AI |
@@ -21,7 +22,10 @@
 1. `~/.aicode/` 下存在空文件 `fujiang.off` → 整包跳过（已释放内容保留）。
 2. 读 `assets/fujiang/version.txt` 与 `~/.aicode/fujiang.pack-version` 比对，相同则直接返回（避免每次启动重写 176 个文件）。
 3. 技能：`assets/fujiang/skills/kb-x/` → `~/.aicode/skills/kb-x/`，覆盖式释放。
-4. 提示词：`assets/fujiang/prompts/*.md` → `~/.aicode/prompts.custom/`，**只在目标不存在时写入**，写过后由用户接管，升级不回滚。
+4. 提示词：`assets/fujiang/prompts/*.md` → `~/.aicode/prompts.custom/`，按托管哈希决定是否升级：
+   文件不存在则写入；内容仍等于上一版包释放的版本（`~/.aicode/fujiang/managed-prompts.json`
+   里记的哈希，或 `prompts-baseline.txt` 的基线）则覆盖为新版；用户改过的保留不动。
+   托管清单格式 `{"schema":1,"prompts":{"文件名":"sha256"}}`，与上游 `managed-prompts.json` 一致。
 5. 版本号写回 `fujiang.pack-version`。
 
 技能文件落盘后由既有的 `GlobalDirectorySkillSource` 扫描进「可用技能」清单，AI 用 `loadSkill` 读正文；
@@ -41,7 +45,7 @@
 | 标题词 | 每条 +6，封顶 18（产品已命中时不计） |
 | severity=critical | +5 |
 
-入参：`ports`（`443,8443`）、`banner`、`product`、`text`、`limit`（默认 5，最大 20）。
+入参：`ports`（`443,8443`）、`port`（单个端口）、`banner`、`headers`（响应头原文）、`product`、`text`、`limit`（默认 5，最大 20）。
 出参：`hits[]`，每条带 `score/category/file/path/title/cve/severity/product/versions/why`，
 `path` 可直接 `readFile` 读详情。
 
@@ -51,6 +55,17 @@
   本 App 没有等价内核，**未移植**；对应能力用「技能 + 提示词 + kbMatch 工具」承担。
 - 上游按需下载的 REA / AboutSecurity 技能库不随包内置（体积与网络原因），需要时用 App 的技能导入功能单独装。
 - 上游 `verified: false` 语义保留：条目是公开资料整理，出报告前须按目标版本自验。
+
+## 0.20.13 相对 0.20.12
+
+上游这一版只改了 DSH 客户端侧：关闭免责声明后的键盘监听（Enter / Shift+Enter / Esc）、输入法合成事件、
+安装器查找 DSH 路径（支持非 C 盘、`-DshCommand`）。这些在 Android 上没有对应物；
+知识库 176 个文件与 `kbMatch` 打分逻辑逐字节一致，本仓库侧的实质变更：
+
+- 提示词覆盖层补上上游「工作环境」「禁止降级」「直接生成」三段规则（保持中文与本地工具指引）。
+- 提示词改为托管哈希升级：老用户装新版能拿到 0.20.13 的提示词，改过的片段仍保留。
+- `kbMatch` 补齐上游 `kb_match` / `match()` 支持的 `port`、`headers` 入参。
+- `version.txt` 升到 `0.20.13`（版本变化触发整包重新释放）。
 
 ## 关掉 / 更新
 
@@ -64,5 +79,8 @@ rm ~/.aicode/fujiang.off
 # 强制重新释放（改了 assets 里的语料后）
 rm ~/.aicode/fujiang.pack-version
 ```
+
+升级提示词时同步更新 `assets/fujiang/prompts-baseline.txt`：把**当前**版本 `prompts/` 的 sha256
+写进去，下个版本的释放逻辑就能认出「还是包自己写的」。
 
 `~/.aicode/` 在容器内即 `/root/.aicode/`，也可以用 App 的文件树直接改。

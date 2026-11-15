@@ -36,7 +36,7 @@ class KbMatchTool @Inject constructor(
     override val name = "kbMatch"
     override val capabilities = setOf(ToolCapability.READ_AGENT_CONFIG)
     override val description =
-        "在本地 CVE/PoC 知识库（~/.aicode/skills/kb-*）里按端口、banner、产品名或描述文本匹配漏洞条目，" +
+        "在本地 CVE/PoC 知识库（~/.aicode/skills/kb-*）里按端口、banner、响应头、产品名或描述文本匹配漏洞条目，" +
             "返回候选条目与命中理由。拿到目标指纹后先调它，再按返回的 path 读条目详情或 loadSkill 加载分类。"
 
     override val parameters: Map<String, ToolParameter> = mapOf(
@@ -44,6 +44,18 @@ class KbMatchTool @Inject constructor(
             name = "ports",
             type = ParameterType.STRING,
             description = "开放端口，逗号分隔，如 443,8443。",
+            required = false
+        ),
+        "port" to ToolParameter(
+            name = "port",
+            type = ParameterType.INTEGER,
+            description = "单个端口号（等同于 ports 里的一项）。",
+            required = false
+        ),
+        "headers" to ToolParameter(
+            name = "headers",
+            type = ParameterType.STRING,
+            description = "响应头原文，如 Server: nginx/1.24.0 / X-Powered-By: PHP/7.4。",
             required = false
         ),
         "banner" to ToolParameter(
@@ -73,22 +85,27 @@ class KbMatchTool @Inject constructor(
     )
 
     override suspend fun execute(args: Map<String, JsonElement>): ToolResult {
-        val ports = args["ports"]?.jsonPrimitive?.contentOrNull.orEmpty()
-            .split(',', '，', ' ')
+        val singlePort = args["port"]?.jsonPrimitive?.contentOrNull.orEmpty().trim()
+        val ports = (listOf(singlePort) + args["ports"]?.jsonPrimitive?.contentOrNull.orEmpty()
+            .split(',', '，', ' '))
             .map { it.trim() }
             .filter { it.isNotEmpty() }
+            .distinct()
         val banner = args["banner"]?.jsonPrimitive?.contentOrNull.orEmpty()
+        val headers = args["headers"]?.jsonPrimitive?.contentOrNull.orEmpty()
         val product = args["product"]?.jsonPrimitive?.contentOrNull.orEmpty()
         val text = args["text"]?.jsonPrimitive?.contentOrNull.orEmpty()
         val limit = args["limit"]?.jsonPrimitive?.intOrNull ?: DEFAULT_LIMIT
 
-        if (ports.isEmpty() && banner.isBlank() && product.isBlank() && text.isBlank()) {
-            return ToolResult.Error("至少提供一个：ports / banner / product / text", "MISSING_QUERY")
+        if (ports.isEmpty() && banner.isBlank() && headers.isBlank() && product.isBlank() && text.isBlank()) {
+            return ToolResult.Error("至少提供一个：ports / port / banner / headers / product / text", "MISSING_QUERY")
         }
 
         val hits = runCatching {
             KnowledgeIndex(fileAccess).match(
-                KnowledgeIndex.Query(ports = ports, banner = banner, product = product, text = text),
+                KnowledgeIndex.Query(
+                    ports = ports, banner = banner, product = product, text = text, headers = headers
+                ),
                 limit
             )
         }.getOrElse { e ->

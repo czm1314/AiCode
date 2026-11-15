@@ -6,7 +6,7 @@ import com.aicode.feature.workspace.domain.FileAccessProvider
 /**
  * CVE / PoC 知识库的本地索引与指纹匹配（「富江破甲包」的 kbMatch 能力）。
  *
- * 语料是随 App 附带的 `~/.aicode/skills/kb-*/` 目录，一条 `.md` 一个漏洞条目，
+ * 语料是随 App 附带的 `~/.aicode/skills/kb-*` 目录，一条 `.md` 一个漏洞条目，
  * 元数据全在 frontmatter（title / cve / severity / product / versions / ports / keywords / entry）。
  *
  * 打分规则（与上游插件 automation.js 一致，只做本地排序，不联网、不执行任何东西）：
